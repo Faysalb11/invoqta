@@ -1,0 +1,26 @@
+# Python
+backend/.venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Other sensitive files
+*.pem
+*.key
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Generated invoices and unnecessary archives
+backend/generated_invoices/
+frontend/public/fonts/musont.zip
