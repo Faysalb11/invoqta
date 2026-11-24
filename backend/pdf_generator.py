@@ -1,4 +1,6 @@
 
+from xml.sax.saxutils import escape
+
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -11,6 +13,11 @@ from reportlab.platypus import (
     TableStyle,
 )
 from reportlab.lib.enums import TA_RIGHT
+
+
+def safe_text(value):
+    """Escape user-provided text before inserting it into PDF paragraphs."""
+    return escape(str(value if value is not None else ""))
 
 
 def generate_invoice_pdf(data, output_path):
@@ -50,7 +57,7 @@ def generate_invoice_pdf(data, output_path):
     # Header
     header = Table([
         [
-            Paragraph("<b>INVOORA</b>", styles["Heading1"]),
+            Paragraph("<b>INVOQTA</b>", styles["Heading1"]),
             Paragraph("INVOICE", styles["InvoiceTitle"]),
         ]
     ], colWidths=[85 * mm, 90 * mm])
@@ -72,17 +79,23 @@ def generate_invoice_pdf(data, output_path):
         ],
         [
             Paragraph(
-                f"{data['business_name']}<br/>{data['business_email']}",
+                f"{safe_text(data['business_name'])}<br/>"
+                f"{safe_text(data['business_email'])}",
                 styles["Normal"],
             ),
             Paragraph(
-                f"{data['client_name']}<br/>{data['client_email']}",
+                f"{safe_text(data['client_name'])}<br/>"
+                f"{safe_text(data['client_email'])}",
                 styles["Normal"],
             ),
         ],
     ]
 
-    details_table = Table(details, colWidths=[87.5 * mm, 87.5 * mm])
+    details_table = Table(
+        details,
+        colWidths=[87.5 * mm, 87.5 * mm],
+    )
+
     details_table.setStyle(TableStyle([
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
@@ -93,9 +106,9 @@ def generate_invoice_pdf(data, output_path):
 
     # Invoice information
     story.append(Paragraph(
-        f"<b>Invoice:</b> {data['invoice_number']}<br/>"
-        f"<b>Issue date:</b> {data['issue_date']}<br/>"
-        f"<b>Due date:</b> {data['due_date']}",
+        f"<b>Invoice:</b> {safe_text(data['invoice_number'])}<br/>"
+        f"<b>Issue date:</b> {safe_text(data['issue_date'])}<br/>"
+        f"<b>Due date:</b> {safe_text(data['due_date'])}",
         styles["Normal"],
     ))
 
@@ -117,7 +130,10 @@ def generate_invoice_pdf(data, output_path):
         total += amount
 
         table_data.append([
-            Paragraph(str(item["description"]), styles["Normal"]),
+            Paragraph(
+                safe_text(item["description"]),
+                styles["Normal"],
+            ),
             f"{currency} {rate:,.2f}",
             f"{hours:g}",
             f"{currency} {amount:,.2f}",
@@ -166,7 +182,13 @@ def generate_invoice_pdf(data, output_path):
     # Notes
     if data.get("notes"):
         story.append(Spacer(1, 12 * mm))
-        story.append(Paragraph("<b>NOTES</b>", styles["Normal"]))
-        story.append(Paragraph(data["notes"], styles["SmallText"]))
+        story.append(Paragraph(
+            "<b>NOTES</b>",
+            styles["Normal"],
+        ))
+        story.append(Paragraph(
+            safe_text(data["notes"]),
+            styles["SmallText"],
+        ))
 
     document.build(story)
