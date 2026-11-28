@@ -34,7 +34,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
     title="Invoqta API",
-    description="Secure PDF invoice generation API for Invoqta.",
+    description="PDF invoice generation API for Invoqta.",
     version="1.0.0",
 )
 
@@ -44,6 +44,7 @@ app.add_exception_handler(
     _rate_limit_exceeded_handler,
 )
 
+# CORS
 allowed_origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -71,6 +72,7 @@ app.add_middleware(
 )
 
 
+# Models
 class WorkItem(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -104,6 +106,20 @@ class Invoice(BaseModel):
     notes: str = Field(default="", max_length=2000)
 
 
+# Temporary file cleanup
+def cleanup_files(output_path, logo_path):
+    for path in (output_path, logo_path):
+        if path and os.path.exists(path):
+            try:
+                os.unlink(path)
+            except OSError:
+                logger.exception(
+                    "Could not remove temporary file: %s",
+                    path,
+                )
+
+
+# Home
 @app.get("/")
 def home():
     return {
@@ -112,6 +128,7 @@ def home():
     }
 
 
+# Generate invoice PDF
 @app.post("/generate-invoice")
 @limiter.limit("5/minute")
 def create_invoice(
@@ -123,6 +140,7 @@ def create_invoice(
     logo_path = None
 
     try:
+        # Validate invoice data
         try:
             invoice_dict = json.loads(invoice_data)
             invoice = Invoice.model_validate(invoice_dict)
@@ -134,8 +152,12 @@ def create_invoice(
 
         validated_data = invoice.model_dump()
 
+        # Validate and save optional logo
         if logo and logo.filename:
-            if logo.content_type not in ("image/png", "image/jpeg"):
+            if logo.content_type not in (
+                "image/png",
+                "image/jpeg",
+            ):
                 raise HTTPException(
                     status_code=400,
                     detail="Only PNG and JPG logos are allowed.",
@@ -173,6 +195,7 @@ def create_invoice(
 
             validated_data["logo_path"] = logo_path
 
+        # Generate PDF
         descriptor, output_path = tempfile.mkstemp(
             prefix="invoqta_",
             suffix=".pdf",
@@ -185,7 +208,11 @@ def create_invoice(
             path=output_path,
             media_type="application/pdf",
             filename="Invoqta_Invoice.pdf",
-            background=BackgroundTask(cleanup_files, output_path, logo_path),
+            background=BackgroundTask(
+                cleanup_files,
+                output_path,
+                logo_path,
+            ),
         )
 
     except HTTPException:
@@ -195,16 +222,9 @@ def create_invoice(
     except Exception:
         cleanup_files(output_path, logo_path)
         logger.exception("Invoice PDF generation failed")
+
         raise HTTPException(
             status_code=500,
             detail="Unable to generate invoice PDF. Please try again.",
         )
 
-
-def cleanup_files(output_path, logo_path):
-    for path in (output_path, logo_path):
-        if path and os.path.exists(path):
-            try:
-                os.unlink(path)
-            except OSError:
-                logger.exception("Could not remove temporary file: %s", path)
