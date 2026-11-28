@@ -4,16 +4,12 @@ import Sidebar from '../../components/Sidebar'
 
 function WorkspaceLayout() {
   return (
-    <div className="flex min-h-screen bg-[#EAF4FC]">
-
-      {/* Left sidebar */}
+    <div className="flex h-screen overflow-hidden bg-[#EAF4FC]">
       <Sidebar />
 
-      {/* Main workspace */}
-      <main className="min-w-0 flex-1 overflow-y-auto p-6 md:p-10">
+      <main className="h-screen min-w-0 flex-1 overflow-y-auto p-6 md:p-10">
         <Outlet />
       </main>
-
     </div>
   )
 }

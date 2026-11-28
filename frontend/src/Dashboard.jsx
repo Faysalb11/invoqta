@@ -72,9 +72,9 @@ function App() {
 
     const demoInvoice = {
 
-      business_name: 'M Faysal',
+      business_name: 'Robert Anderson',
 
-      business_email: 'faysal@example.com',
+      business_email: 'hello@example.com',
 
       client_name: 'Bright Studio',
 
@@ -835,7 +835,7 @@ function App() {
                   <div className="grid grid-cols-2 gap-3 py-3 sm:gap-5 sm:py-4">
                     <div>
                       <p className="text-[8px] font-semibold uppercase tracking-wider text-[#9AA8B5] sm:text-[9px]">From</p>
-                      <p className="mt-1 text-[10px] font-bold text-[#173B5E] sm:text-xs">M Faysal</p>
+                      <p className="mt-1 text-[10px] font-bold text-[#173B5E] sm:text-xs">Robert Anderson</p>
                     </div>
                     <div>
                       <p className="text-[8px] font-semibold uppercase tracking-wider text-[#9AA8B5] sm:text-[9px]">Bill to</p>
@@ -1224,7 +1224,7 @@ function App() {
 
                   <p className="body-font mt-2 text-lg font-bold">
 
-                    M Faysal
+                    Robert Anderson
 
                   </p>
 
@@ -1240,7 +1240,7 @@ function App() {
 
                   <p className="body-font mt-1 text-xs text-gray-500">
 
-                    faysal@example.com
+                    hello@example.com
 
                   </p>
 
@@ -1537,76 +1537,47 @@ function App() {
 
 
       {/* HOW IT WORKS */}
+      
+{/* HOW IT WORKS */}
+
+<section
+  id="how-it-works"
+  className="bg-[#173B5E] px-6 py-24 text-white"
+>
+  <div className="mx-auto max-w-6xl text-center">
+
+    <p className="interface-font text-xs font-bold uppercase tracking-[0.2em] text-[#E97863] reveal">
+      SIMPLE BY DESIGN
+    </p>
+
+    <h2 className="heading-font mt-4 text-4xl sm:text-5xl reveal">
+      Your invoice, your style, in four simple steps.
+    </h2>
+
+    <div className="mt-14 grid gap-12 text-center sm:grid-cols-2 lg:grid-cols-4">
+
+      <Step number="01" title="Choose your template">
+        Pick a professional invoice design that matches your style.
+      </Step>
+
+      <Step number="02" title="Enter your details">
+        Add your business information and your client's details.
+      </Step>
+
+      <Step number="03" title="Add your work">
+        Enter service descriptions, hourly rates, and total hours.
+      </Step>
+
+      <Step number="04" title="Download your PDF">
+        Let Invoqta calculate everything and generate your professional invoice.
+      </Step>
+
+    </div>
+
+  </div>
+</section>
 
 
-
-      <section
-
-        id="how-it-works"
-
-        className="bg-[#173B5E] px-6 py-24 text-white"
-
-      >
-
-
-
-        <div className="mx-auto max-w-5xl text-center">
-
-
-
-          <p className="interface-font text-xs font-bold uppercase tracking-[0.2em] text-[#E97863] reveal">
-
-            SIMPLE BY DESIGN
-
-          </p>
-
-
-
-          <h2 className="heading-font mt-4 text-4xl sm:text-5xl reveal">
-
-            Your invoice in three simple steps.
-
-          </h2>
-
-
-
-          <div className="mt-14 grid gap-10 text-left sm:grid-cols-3">
-
-
-
-            <Step number="01" title="Enter your details">
-
-              Add your freelancer information and your client's details.
-
-            </Step>
-
-
-
-            <Step number="02" title="Add your work">
-
-              Enter descriptions, hourly rates, and total hours.
-
-            </Step>
-
-
-
-            <Step number="03" title="Download your PDF">
-
-              Let Invoqta calculate everything and generate your invoice.
-
-            </Step>
-
-
-
-          </div>
-
-
-
-        </div>
-
-
-
-      </section>
 
 
 

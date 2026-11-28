@@ -4,7 +4,7 @@ import json
 import logging
 import tempfile
 from io import BytesIO
-from typing import List
+from typing import List, Literal
 
 from fastapi import (
     FastAPI,
@@ -104,6 +104,9 @@ class Invoice(BaseModel):
     )
     items: List[WorkItem] = Field(min_length=1, max_length=50)
     notes: str = Field(default="", max_length=2000)
+
+    # PDF template selection
+    template: Literal["modern", "minimal", "creative"] = "modern"
 
 
 # Temporary file cleanup
@@ -227,4 +230,3 @@ def create_invoice(
             status_code=500,
             detail="Unable to generate invoice PDF. Please try again.",
         )
-

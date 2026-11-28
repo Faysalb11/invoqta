@@ -1,11 +1,13 @@
-import InvoiceHistory from './pages/workspace/InvoiceHistory'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
 import Dashboard from './Dashboard'
 import CreateInvoice from './pages/CreateInvoice'
 
 import WorkspaceLayout from './pages/workspace/WorkspaceLayout'
 import Overview from './pages/workspace/Overview'
+import InvoiceHistory from './pages/workspace/InvoiceHistory'
+import ChooseTemplate from './pages/workspace/ChooseTemplate'
 
 function ComingSoon({ title }) {
   return (
@@ -22,22 +24,29 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* Public landing page */}
         <Route path="/" element={<Dashboard />} />
 
-        {/* Existing invoice page — preserve current links */}
-        <Route path="/create-invoice" element={<CreateInvoice />} />
+        {/* Keep old links working */}
+        <Route
+          path="/create-invoice"
+          element={<Navigate to="/workspace/choose-template" replace />}
+        />
 
-        {/* Logged-in workspace */}
+        {/* Workspace */}
         <Route path="/workspace" element={<WorkspaceLayout />}>
           <Route index element={<Overview />} />
+
+          <Route path="choose-template" element={<ChooseTemplate />} />
+
           <Route path="create-invoice" element={<CreateInvoice />} />
+
           <Route path="invoices" element={<InvoiceHistory />} />
+
           <Route path="clients" element={<ComingSoon title="Clients" />} />
+
           <Route path="settings" element={<ComingSoon title="Settings" />} />
         </Route>
-
       </Routes>
     </BrowserRouter>
   )

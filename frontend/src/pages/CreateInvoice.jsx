@@ -1,7 +1,7 @@
 
 import { saveInvoice } from '../utils/invoiceStorage'
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 import {
   ArrowLeft,
@@ -30,6 +30,7 @@ const SectionHeading = ({ icon: Icon, title, description }) => (
     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#EAF4FC] text-[#173B5E]">
       <Icon size={20} />
     </div>
+
     <div>
       <h2
         className="text-lg font-semibold text-[#173B5E]"
@@ -37,6 +38,7 @@ const SectionHeading = ({ icon: Icon, title, description }) => (
       >
         {title}
       </h2>
+
       {description && (
         <p className="mt-1 text-xs text-[#6B7D8D]">{description}</p>
       )}
@@ -44,11 +46,33 @@ const SectionHeading = ({ icon: Icon, title, description }) => (
   </div>
 )
 
+const templateStyles = {
+  modern: {
+    accent: '#173B5E',
+    soft: '#EAF4FC',
+    highlight: '#E97863',
+    border: '#DCE7EF',
+  },
+  minimal: {
+    accent: '#252525',
+    soft: '#F1F1F1',
+    highlight: '#555555',
+    border: '#DDDDDD',
+  },
+  creative: {
+    accent: '#713C32',
+    soft: '#FCEDE9',
+    highlight: '#E97863',
+    border: '#F1D8D1',
+  },
+}
+
 export default function CreateInvoice() {
   const navigate = useNavigate()
+  const location = useLocation()
 
-  const [business, setBusiness] = useState('Faysal Studio')
-  const [email, setEmail] = useState('hello@faysalstudio.com')
+  const [business, setBusiness] = useState('Robert Anderson')
+  const [email, setEmail] = useState('hello@example.com')
   const [client, setClient] = useState('')
   const [clientEmail, setClientEmail] = useState('')
   const [invoiceNumber, setInvoiceNumber] = useState('INV-001')
@@ -57,7 +81,13 @@ export default function CreateInvoice() {
   const [currency, setCurrency] = useState('USD')
   const [notes, setNotes] = useState('Thank you for trusting my work!')
   const [isGenerating, setIsGenerating] = useState(false)
+
   const [logoFile, setLogoFile] = useState(null)
+  const [logoPreview, setLogoPreview] = useState(null)
+
+  const [selectedTemplate, setSelectedTemplate] = useState(
+    location.state?.template || 'modern'
+  )
 
   const [items, setItems] = useState([
     {
@@ -73,6 +103,23 @@ export default function CreateInvoice() {
       hours: 10,
     },
   ])
+
+  const theme = templateStyles[selectedTemplate] || templateStyles.modern
+
+  // Create and clean up logo preview URL
+  useEffect(() => {
+    if (!logoFile) {
+      setLogoPreview(null)
+      return
+    }
+
+    const previewUrl = URL.createObjectURL(logoFile)
+    setLogoPreview(previewUrl)
+
+    return () => {
+      URL.revokeObjectURL(previewUrl)
+    }
+  }, [logoFile])
 
   const inputClass =
     'w-full rounded-xl border border-[#DCE7EF] bg-white px-4 py-3 text-sm text-[#173B5E] outline-none transition placeholder:text-[#A0AFBC] focus:border-[#173B5E] focus:ring-4 focus:ring-[#EAF4FC]'
@@ -115,7 +162,6 @@ export default function CreateInvoice() {
     )
   }
 
-  // Generate and download invoice PDF
   const handleDownloadPDF = async () => {
     setIsGenerating(true)
 
@@ -129,6 +175,7 @@ export default function CreateInvoice() {
         issue_date: issueDate,
         due_date: dueDate,
         currency,
+        template: selectedTemplate,
         items: items.map((item) => ({
           description: item.description,
           rate: Number(item.rate),
@@ -168,6 +215,7 @@ export default function CreateInvoice() {
         issueDate,
         dueDate,
         currency,
+        template: selectedTemplate,
         items: items.map((item) => ({
           description: item.description,
           rate: Number(item.rate),
@@ -190,10 +238,11 @@ export default function CreateInvoice() {
       link.remove()
 
       window.URL.revokeObjectURL(downloadUrl)
-
     } catch (error) {
       console.error(error)
-      alert('Could not generate PDF. Please check that your backend server is running.')
+      alert(
+        'Could not generate PDF. Please check that your backend server is running.'
+      )
     } finally {
       setIsGenerating(false)
     }
@@ -209,9 +258,9 @@ export default function CreateInvoice() {
         <div className="mx-auto flex max-w-[1500px] items-center justify-between px-5 py-4 md:px-10">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/workspace/choose-template')}
               className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#DCE7EF] bg-white transition hover:bg-[#F5FAFE]"
-              aria-label="Back to homepage"
+              aria-label="Back to templates"
             >
               <ArrowLeft size={19} />
             </button>
@@ -233,31 +282,25 @@ export default function CreateInvoice() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-[#6B7D8D] sm:block">
-              Invoice workspace
+          <button
+            onClick={handleDownloadPDF}
+            disabled={isGenerating}
+            className="flex items-center gap-2 rounded-xl bg-[#173B5E] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#244F75] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isGenerating ? (
+              <LoaderCircle size={17} className="animate-spin" />
+            ) : (
+              <Download size={17} />
+            )}
+            <span>
+              {isGenerating ? 'Generating...' : 'Download PDF'}
             </span>
-
-            <button
-              onClick={handleDownloadPDF}
-              disabled={isGenerating}
-              className="flex items-center gap-2 rounded-xl bg-[#173B5E] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#244F75] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isGenerating ? (
-                <LoaderCircle size={17} className="animate-spin" />
-              ) : (
-                <Download size={17} />
-              )}
-              <span>
-                {isGenerating ? 'Generating...' : 'Download PDF'}
-              </span>
-            </button>
-          </div>
+          </button>
         </div>
       </header>
 
       <main className="mx-auto max-w-[1500px] px-5 py-9 md:px-10">
-        {/* Page introduction */}
+        {/* Introduction */}
         <div className="mb-9">
           <p className="mb-3 text-xs font-semibold tracking-[0.2em] text-[#E97863]">
             YOUR INVOICING WORKSPACE
@@ -273,6 +316,12 @@ export default function CreateInvoice() {
           <p className="mt-3 max-w-xl text-sm leading-7 text-[#6B7D8D]">
             Add your work, set your rates, and create a professional invoice
             ready to send to your client.
+          </p>
+
+          <p className="mt-3 inline-flex rounded-full px-3 py-2 text-xs font-semibold"
+            style={{ backgroundColor: theme.soft, color: theme.accent }}
+          >
+            Selected template: {selectedTemplate.charAt(0).toUpperCase() + selectedTemplate.slice(1)}
           </p>
         </div>
 
@@ -338,6 +387,7 @@ export default function CreateInvoice() {
                       setLogoFile(file)
                     }}
                   />
+
                   <p className="mt-2 text-xs text-[#8293A1]">
                     PNG or JPG. Maximum size: 2 MB.
                   </p>
@@ -399,11 +449,22 @@ export default function CreateInvoice() {
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
                   >
-                    <option value="USD">USD — US Dollar</option>
-                    <option value="EUR">EUR — Euro</option>
-                    <option value="GBP">GBP — British Pound</option>
-                    <option value="PKR">PKR — Pakistani Rupee</option>
-                    <option value="AED">AED — UAE Dirham</option>
+                      <option value="USD">🇺🇸 USD — US Dollar</option>
+  <option value="EUR">🇪🇺 EUR — Euro</option>
+  <option value="GBP">🇬🇧 GBP — British Pound</option>
+  <option value="PKR">🇵🇰 PKR — Pakistani Rupee</option>
+  <option value="AED">🇦🇪 AED — UAE Dirham</option>
+  <option value="SAR">🇸🇦 SAR — Saudi Riyal</option>
+  <option value="CAD">🇨🇦 CAD — Canadian Dollar</option>
+  <option value="AUD">🇦🇺 AUD — Australian Dollar</option>
+  <option value="NZD">🇳🇿 NZD — New Zealand Dollar</option>
+  <option value="SGD">🇸🇬 SGD — Singapore Dollar</option>
+  <option value="INR">🇮🇳 INR — Indian Rupee</option>
+  <option value="BDT">🇧🇩 BDT — Bangladeshi Taka</option>
+  <option value="JPY">🇯🇵 JPY — Japanese Yen</option>
+  <option value="CHF">🇨🇭 CHF — Swiss Franc</option>
+  <option value="CNY">🇨🇳 CNY — Chinese Yuan</option>
+  <option value="QAR">🇶🇦 QAR — Qatari Riyal</option>
                   </select>
                 </Field>
 
@@ -435,6 +496,7 @@ export default function CreateInvoice() {
                   title="Work & services"
                   description="Add each service, your hourly rate and hours worked."
                 />
+
                 <span className="rounded-full bg-[#EAF4FC] px-3 py-1.5 text-xs font-semibold text-[#173B5E]">
                   {items.length} items
                 </span>
@@ -474,17 +536,15 @@ export default function CreateInvoice() {
 
                     <div className="mt-4 grid grid-cols-2 gap-4">
                       <Field label="Hourly rate">
-                        <div className="relative">
-                          <input
-                            type="number"
-                            min="0"
-                            className={inputClass}
-                            value={item.rate}
-                            onChange={(e) =>
-                              updateItem(item.id, 'rate', e.target.value)
-                            }
-                          />
-                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          className={inputClass}
+                          value={item.rate}
+                          onChange={(e) =>
+                            updateItem(item.id, 'rate', e.target.value)
+                          }
+                        />
                       </Field>
 
                       <Field label="Total hours">
@@ -508,8 +568,7 @@ export default function CreateInvoice() {
 
                       <span className="text-lg font-semibold text-[#173B5E]">
                         {formatMoney(
-                          Number(item.rate || 0) *
-                          Number(item.hours || 0)
+                          Number(item.rate || 0) * Number(item.hours || 0)
                         )}
                       </span>
                     </div>
@@ -531,10 +590,12 @@ export default function CreateInvoice() {
                   <span className="text-sm text-white/75">
                     Invoice subtotal
                   </span>
+
                   <span className="text-2xl font-semibold">
                     {formatMoney(subtotal)}
                   </span>
                 </div>
+
                 <p className="mt-2 text-xs text-white/60">
                   Automatically calculated from your work entries.
                 </p>
@@ -558,7 +619,7 @@ export default function CreateInvoice() {
               />
             </section>
 
-            {/* Mobile download button */}
+            {/* Mobile download */}
             <button
               onClick={handleDownloadPDF}
               disabled={isGenerating}
@@ -569,17 +630,19 @@ export default function CreateInvoice() {
               ) : (
                 <Download size={18} />
               )}
+
               {isGenerating ? 'Generating your invoice...' : 'Download invoice PDF'}
             </button>
           </div>
 
           {/* RIGHT: LIVE PREVIEW */}
-          <div className="xl:sticky xl:top-24">
+          <div className="xl:sticky xl:top-24 xl:self-start">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold tracking-[0.15em] text-[#E97863]">
                   YOUR DOCUMENT
                 </p>
+
                 <h2
                   className="mt-1 text-2xl text-[#173B5E]"
                   style={{ fontFamily: 'Musont, sans-serif' }}
@@ -594,44 +657,72 @@ export default function CreateInvoice() {
               </span>
             </div>
 
-            {/* Invoice document */}
             <div
               id="invoice-preview"
-              className="overflow-hidden rounded-2xl border border-[#DCE7EF] bg-white p-5 shadow-lg sm:p-8"
+              className="overflow-hidden rounded-2xl border bg-white p-5 shadow-lg sm:p-8"
+              style={{ borderColor: theme.border }}
             >
               {/* Invoice heading */}
-              <div className="flex items-start justify-between gap-3 border-b border-[#DCE7EF] pb-7">
-                <div>
-                  <div className="mb-4 flex items-center gap-2">
-                    <div
-                      className="flex h-9 w-9 items-center justify-center rounded-md bg-[#173B5E] text-xl text-white"
-                      style={{ fontFamily: 'Mending, serif' }}
-                    >
-                      I
-                    </div>
-                    <span
-                      className="text-2xl text-[#173B5E]"
-                      style={{ fontFamily: 'Musont, sans-serif' }}
-                    >
-                      Invoqta
-                    </span>
+              <div
+                className="flex items-start justify-between gap-3 border-b pb-7"
+                style={{ borderColor: theme.border }}
+              >
+                <div className="min-w-0">
+                  <div className="mb-4 flex h-14 items-center">
+                    {logoPreview ? (
+                      <img
+                        src={logoPreview}
+                        alt="Your business logo"
+                        className="h-14 max-w-[160px] object-contain object-left"
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="flex h-9 w-9 items-center justify-center rounded-md text-xl text-white"
+                          style={{
+                            backgroundColor: theme.accent,
+                            fontFamily: '"Mending Regular", serif',
+                          }}
+                        >
+                          I
+                        </div>
+
+                        <span
+                          className="text-2xl"
+                          style={{
+                            color: theme.accent,
+                            fontFamily: 'Musont, sans-serif',
+                          }}
+                        >
+                          Invoqta
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  <p className="text-sm font-semibold text-[#173B5E]">
+                  <p
+                    className="break-words text-sm font-semibold"
+                    style={{ color: theme.accent }}
+                  >
                     {business || 'Your business name'}
                   </p>
+
                   <p className="mt-1 break-all text-xs text-[#8293A1]">
                     {email || 'Your email address'}
                   </p>
                 </div>
 
-                <div className="text-right">
+                <div className="shrink-0 text-right">
                   <h2
-                    className="text-3xl text-[#173B5E]"
-                    style={{ fontFamily: 'Musont, sans-serif' }}
+                    className="text-3xl"
+                    style={{
+                      color: theme.accent,
+                      fontFamily: 'Musont, sans-serif',
+                    }}
                   >
                     INVOICE
                   </h2>
+
                   <p className="mt-2 text-xs text-[#8293A1]">
                     {invoiceNumber || 'INV-001'}
                   </p>
@@ -639,26 +730,42 @@ export default function CreateInvoice() {
               </div>
 
               {/* Client and dates */}
-              <div className="grid grid-cols-2 gap-4 border-b border-[#DCE7EF] py-7">
+              <div
+                className="grid grid-cols-2 gap-4 border-b py-7"
+                style={{ borderColor: theme.border }}
+              >
                 <div>
-                  <p className="mb-3 text-[10px] font-semibold tracking-[0.15em] text-[#E97863]">
+                  <p
+                    className="mb-3 text-[10px] font-semibold tracking-[0.15em]"
+                    style={{ color: theme.highlight }}
+                  >
                     BILLED TO
                   </p>
-                  <p className="break-words text-sm font-semibold text-[#173B5E]">
+
+                  <p
+                    className="break-words text-sm font-semibold"
+                    style={{ color: theme.accent }}
+                  >
                     {client || 'Client name'}
                   </p>
+
                   <p className="mt-1 break-all text-xs text-[#8293A1]">
                     {clientEmail}
                   </p>
                 </div>
 
                 <div className="text-right">
-                  <p className="mb-3 text-[10px] font-semibold tracking-[0.15em] text-[#E97863]">
+                  <p
+                    className="mb-3 text-[10px] font-semibold tracking-[0.15em]"
+                    style={{ color: theme.highlight }}
+                  >
                     INVOICE DATES
                   </p>
+
                   <p className="text-xs text-[#6B7D8D]">
                     Issue: {issueDate || '—'}
                   </p>
+
                   <p className="mt-2 text-xs text-[#6B7D8D]">
                     Due: {dueDate || '—'}
                   </p>
@@ -669,7 +776,13 @@ export default function CreateInvoice() {
               <div className="overflow-x-auto py-6">
                 <table className="w-full min-w-[390px] text-left">
                   <thead>
-                    <tr className="border-b border-[#DCE7EF] text-[10px] font-semibold tracking-wider text-[#8293A1]">
+                    <tr
+                      className="border-b text-[10px] font-semibold tracking-wider"
+                      style={{
+                        color: theme.accent,
+                        borderColor: theme.border,
+                      }}
+                    >
                       <th className="pb-3 pr-2">DESCRIPTION</th>
                       <th className="px-2 pb-3 text-right">RATE</th>
                       <th className="px-2 pb-3 text-right">HOURS</th>
@@ -681,21 +794,30 @@ export default function CreateInvoice() {
                     {items.map((item) => (
                       <tr
                         key={item.id}
-                        className="border-b border-[#EDF2F6]"
+                        className="border-b"
+                        style={{ borderColor: theme.border }}
                       >
-                        <td className="py-4 pr-2 text-xs font-medium text-[#173B5E]">
+                        <td
+                          className="py-4 pr-2 text-xs font-medium"
+                          style={{ color: theme.accent }}
+                        >
                           {item.description || 'Work description'}
                         </td>
+
                         <td className="px-2 py-4 text-right text-xs text-[#6B7D8D]">
                           {formatMoney(Number(item.rate || 0))}
                         </td>
+
                         <td className="px-2 py-4 text-right text-xs text-[#6B7D8D]">
                           {item.hours || 0}
                         </td>
-                        <td className="py-4 pl-2 text-right text-xs font-semibold text-[#173B5E]">
+
+                        <td
+                          className="py-4 pl-2 text-right text-xs font-semibold"
+                          style={{ color: theme.accent }}
+                        >
                           {formatMoney(
-                            Number(item.rate || 0) *
-                            Number(item.hours || 0)
+                            Number(item.rate || 0) * Number(item.hours || 0)
                           )}
                         </td>
                       </tr>
@@ -716,41 +838,68 @@ export default function CreateInvoice() {
               </div>
 
               {/* Total */}
-              <div className="ml-auto max-w-[250px] border-t border-[#DCE7EF] pt-5">
+              <div
+                className="ml-auto max-w-[250px] border-t pt-5"
+                style={{ borderColor: theme.border }}
+              >
                 <div className="flex items-center justify-between text-xs text-[#6B7D8D]">
                   <span>Subtotal</span>
                   <span>{formatMoney(subtotal)}</span>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-[#173B5E]">
+                <div
+                  className="mt-4 flex items-center justify-between rounded-lg p-3"
+                  style={{ backgroundColor: theme.soft }}
+                >
+                  <span
+                    className="text-sm font-semibold"
+                    style={{ color: theme.accent }}
+                  >
                     Total due
                   </span>
+
                   <span
-                    className="text-2xl text-[#E97863]"
-                    style={{ fontFamily: 'Musont, sans-serif' }}
+                    className="text-2xl"
+                    style={{
+                      color: theme.highlight,
+                      fontFamily: 'Musont, sans-serif',
+                    }}
                   >
                     {formatMoney(subtotal)}
                   </span>
                 </div>
               </div>
 
-              {/* Footer notes */}
-              <div className="mt-10 border-t border-[#DCE7EF] pt-6">
-                <p className="text-sm font-semibold text-[#173B5E]">
+              {/* Footer */}
+              <div
+                className="mt-10 border-t pt-6"
+                style={{ borderColor: theme.border }}
+              >
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: theme.accent }}
+                >
                   Thank you for your business.
                 </p>
+
                 <p className="mt-2 whitespace-pre-wrap text-xs leading-6 text-[#8293A1]">
                   {notes}
                 </p>
 
-                <div className="mt-8 flex items-center justify-between border-t border-[#EDF2F6] pt-4">
+                <div
+                  className="mt-8 flex items-center justify-between border-t pt-4"
+                  style={{ borderColor: theme.border }}
+                >
                   <span
-                    className="text-sm text-[#173B5E]"
-                    style={{ fontFamily: 'Musont, sans-serif' }}
+                    className="text-sm"
+                    style={{
+                      color: theme.accent,
+                      fontFamily: 'Musont, sans-serif',
+                    }}
                   >
                     Your work. Your worth. Invoiced.
                   </span>
+
                   <span className="text-[10px] text-[#A0AFBC]">
                     Powered by Invoqta
                   </span>
@@ -773,6 +922,7 @@ export default function CreateInvoice() {
               ) : (
                 <Download size={18} />
               )}
+
               {isGenerating ? 'Generating your invoice...' : 'Download invoice PDF'}
             </button>
           </div>
@@ -781,4 +931,3 @@ export default function CreateInvoice() {
     </div>
   )
 }
- 
