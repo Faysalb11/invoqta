@@ -1,3 +1,10 @@
+from reportlab.platypus import Image
+from reportlab.lib.utils import ImageReader
+from PIL import Image as PILImage
+
+
+
+
 
 from xml.sax.saxutils import escape
 
@@ -55,9 +62,19 @@ def generate_invoice_pdf(data, output_path):
     story = []
 
     # Header
+        # Header
+    logo_path = data.get("logo_path")
+
+    if logo_path:
+        logo = Image(logo_path, width=35 * mm, height=20 * mm)
+        logo.hAlign = "LEFT"
+        brand_content = logo
+    else:
+        brand_content = Paragraph("<b>INVOQTA</b>", styles["Heading1"])
+
     header = Table([
         [
-            Paragraph("<b>INVOQTA</b>", styles["Heading1"]),
+            brand_content,
             Paragraph("INVOICE", styles["InvoiceTitle"]),
         ]
     ], colWidths=[85 * mm, 90 * mm])
